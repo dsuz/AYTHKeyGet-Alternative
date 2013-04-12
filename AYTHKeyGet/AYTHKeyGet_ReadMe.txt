@@ -4,12 +4,12 @@ AYTHKeyGet alternative
 
 【説明】
 
-2013年4月のRadikoアップデート以降、Radikaでフックのみでしか聴取できないという報告がたくさんあります。
+2013年4月のRadikoアップデート以降、Radikaがフックのみでしか聴取できないという報告がたくさんあります。
 IE10にアップデートすれば正常に動作するという報告もありますが、XPなどIE10がインストールできないOSでRadikoを聴くためにこれを作りました。
 
 【セットアップ】
 
-1. swtextract.exeをダウンロードする
+1. swfextract.exeをダウンロードする
 SWFTools for Windows 9.1 以降に含まれるswfextract.exeが必要なのでダウンロードしてください。
 現在は http://www.swftools.org/swftools-2013-04-09-1007.exe でダウンロードできますが、見つからない場合は次のページから探して下さい。
 
@@ -37,9 +37,7 @@ radika.exeと同じフォルダにこの２つのファイルがある必要が�
 【注意事項】
 
 ラジコ受信しかテストしていません。このツールを使うと、NHKの受信ができないなど他の問題が起きるかもしれません。
-まだ例外処理が雑なので、エラーなど起きるかもしれません。
 エラーなど問題が起きた時は、コマンドプロンプトから直接AYTHKeyGet.exeを起動して表示される内容をコピーしてどこかに貼ってくれると、対処できるかもしれません。
-問題ない場合は、そのうちソースコードは公開してしまう予定です。
 
 【既知の問題】
 
@@ -50,7 +48,7 @@ radika.AMFReaderException: {level=error,code=NetConnection.Connect.Rejected,desc
 場所 radika.BaseTunerDevice.MyAMFReader.ReadPacket()
 場所 radika.RadikaTask.<>c__DisplayClassb.<Initialize>b__a()
 
-原因と対処方法は不明です。
+PACファイル等でradiko.jp/*.radiko.jpのみプロキシ サーバーを通している時にこの問題が起きます。インターネット オプションの接続設定から、インターネット接続すべてをプロキシ サーバー経由でするように設定してみて下さい。
 
 【参考にしたページ】
 

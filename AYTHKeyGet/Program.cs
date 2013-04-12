@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+//using System.Collections.Generic;
+//using System.Linq;
 using System.Text;
 
 using System.IO;
@@ -11,11 +11,6 @@ namespace AYTHKeyGet
 {
     class Program
     {
-        /* **************************************
-         * TODO:
-         * Implement exception handlers
-         * Verify files are there (swfextract, swf, png)
-         * **************************************/
         static void Main(string[] args)
         {
             const string playerURL = "http://radiko.jp/player/swf/player_4.0.0.00.swf";
@@ -30,6 +25,7 @@ namespace AYTHKeyGet
              * Check
              * **************************************/
             Console.WriteLine("toolFile: {0}", toolFile);
+            // Verify swfextract
             if (!File.Exists(toolFile))
             {
                 string errMsg = toolFile + " が見つかりません。AYTHKeyGet_ReadMe.txtを確認し、セットアップが正しくできているか確認して下さい。";
@@ -41,14 +37,16 @@ namespace AYTHKeyGet
             /* **************************************
              * Save player
              * **************************************/
+            // Build request and request
             HttpWebRequest req =  (System.Net.HttpWebRequest) WebRequest.Create(playerURL);
             Console.WriteLine("Request to: {0}", req.RequestUri);
             HttpWebResponse res = (System.Net.HttpWebResponse) req.GetResponse();   // This may cause unhandled exception.
 
+            // Check response and save received swf file.
             Console.WriteLine("HTTP Status Code: {0}", res.StatusCode.ToString());
             if (res.StatusCode == HttpStatusCode.OK)
             {
-                // save received swf file.
+                // Save received swf file in response
                 Stream stream = res.GetResponseStream();
                 FileStream fs1 = new FileStream(swfFile, FileMode.Create, FileAccess.Write);
 
@@ -71,17 +69,26 @@ namespace AYTHKeyGet
                 throw new Exception(errMsg);
             }
 
+            // Build command and run
             string parameterString = "-b 14 " + swfFile + " -o " + pngFile;
             Console.WriteLine("Command Parameter for tool: {0}", parameterString);
-            ProcessStartInfo psInfo = new ProcessStartInfo(toolFile, parameterString);
-            Process p = Process.Start(psInfo);  // This may cause unhandled excaption.
-            p.WaitForExit();
-            File.Delete(swfFile);
+            try
+            {
+                ProcessStartInfo psInfo = new ProcessStartInfo(toolFile, parameterString);
+                Process p = Process.Start(psInfo);
+                p.WaitForExit();
+                File.Delete(swfFile);
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
             Console.WriteLine("Finished extracting png.");
 
             /* **************************************
              * auth1
              * **************************************/
+            // Build request
             req = (System.Net.HttpWebRequest)WebRequest.Create(auth1URL);
             req.Headers.Add("pragma: no-cache");
             req.Headers.Add("X-Radiko-App: pc_1");
@@ -90,6 +97,7 @@ namespace AYTHKeyGet
             req.Headers.Add("X-Radiko-Device: pc");
             req.Method = "POST";
 
+            // Request
             Console.WriteLine("Request to: {0}", req.RequestUri);
             try
             {
@@ -101,13 +109,14 @@ namespace AYTHKeyGet
             }
             Console.WriteLine("HTTP Status Code: {0}", res.StatusCode.ToString());
 
+            // Retrieve AuthToken, KeyLength, KeyOffset from response headers.
             string authToken = "";
             int keyLength = 0;
             int keyOffset = 0;
 
             if (res.StatusCode == HttpStatusCode.OK)
             {
-                // retrieve AuthToken, KeyLength, KeyOffset from response headers.
+                // Scan headers
                 for (int i = 0; i < res.Headers.Count; i++)
                 {
                     Console.WriteLine("{0} : {1}", res.Headers.GetKey(i).ToString(), res.Headers[i].ToString());
@@ -136,7 +145,7 @@ namespace AYTHKeyGet
                 throw new Exception(errMsg);
             }
 
-            // verify values
+            // Verify values
             if (authToken.Length == 0 || keyLength == 0 || keyOffset == 0)
             {
                 string errMsg = "HTTPヘッダー情報に異常があります。";
@@ -146,7 +155,7 @@ namespace AYTHKeyGet
             Console.WriteLine("Finished auth1.");
 
             /* **************************************
-             * get partial key
+             * Get partial key
              * **************************************/
             // Verify file exists
             if (!File.Exists(pngFile))
@@ -155,19 +164,31 @@ namespace AYTHKeyGet
                 throw new Exception(errMsg);
             }
 
-            FileStream fs2 = new FileStream(pngFile, FileMode.Open, FileAccess.Read);   // This may cause unhandled exception
-            byte[] buf1 = new byte[keyOffset];
-            byte[] buf2 = new byte[keyLength];
-            fs2.Read(buf1, 0, (int)(keyOffset));
-            fs2.Read(buf2, 0, (int)keyLength); 
-            string partialKey = System.Convert.ToBase64String(buf2);
-            fs2.Close();
-            File.Delete(pngFile);
+            // Get partial key
+            string partialKey = "";
+            try
+            {
+                // Open png file, retrieve certain part of the binary, and encode in base64
+                FileStream fs2 = new FileStream(pngFile, FileMode.Open, FileAccess.Read);
+                byte[] buf1 = new byte[keyOffset];  // Dummy buffer
+                byte[] buf2 = new byte[keyLength];
+                fs2.Read(buf1, 0, (int)keyOffset);  // Forward cursor to the offset
+                fs2.Read(buf2, 0, (int)keyLength);  // Read staring from offset by length
+                partialKey = System.Convert.ToBase64String(buf2);   // Convert binary in base64
+                Console.WriteLine("Partial key: {0}", partialKey);  // Show retrieved partial key
+                fs2.Close();
+                File.Delete(pngFile);
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
             Console.WriteLine("Finished getting a partial key.");
 
             /* **************************************
              * auth2
              * **************************************/
+            // Build request
             req = (System.Net.HttpWebRequest)WebRequest.Create(auth2URL);
             req.Headers.Add("pragma: no-cache");
             req.Headers.Add("X-Radiko-App: pc_1");
@@ -178,6 +199,7 @@ namespace AYTHKeyGet
             req.Headers.Add("X-Radiko-Partialkey: " + partialKey);
             req.Method = "POST";
 
+            // Request
             Console.WriteLine("Request to: {0}", req.RequestUri);
             try
             {
@@ -189,8 +211,10 @@ namespace AYTHKeyGet
             }
             Console.WriteLine("HTTP Status Code: {0}", res.StatusCode.ToString());
 
+            // Display authenticated authToken on success
             if (res.StatusCode == HttpStatusCode.OK)
             {
+                // This is what I need
                 Console.WriteLine("{0},{1}", authToken, new String('0', 32)); // string after "," is dummy.
             }
             else
