@@ -6,4 +6,6 @@ RadikaのAYTHKeyGetが完了せずにフックなしでの聴取、録音がで�
 使い方はプロジェクトに含まれているAYTHKeyGet_ReadMe.txtを参照してください。
 バイナリのみ欲しい方は http://www.mediafire.com/download.php?sfiqyt11qqkfxno からダウンロードしてください。
 
+AYTHKeyGet_ReadMe.txtに記載されている「既知の問題」1. に該当する方は https://github.com/dsuz/AYTHKeyGet-Alternative-2 で対応しています。
+
 開発環境: Visual Studio 2010
